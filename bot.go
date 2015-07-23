@@ -30,6 +30,32 @@ func NewBot(token string) (*Bot, error) {
 	}, nil
 }
 
+func (b Bot) SetWebhook(webhookURL string) error {
+	params := url.Values{}
+	params.Set("url", webhookURL)
+	responseJSON, err := sendCommand("setWebhook", b.Token, params)
+	if err != nil {
+		return err
+	}
+	var responseReceived struct {
+		Ok          bool
+		Description string
+	}
+	err = json.Unmarshal(responseJSON, &responseReceived)
+	if err != nil {
+		return err
+	}
+
+	if !responseReceived.Ok {
+		return SendError{responseReceived.Description}
+	}
+	return nil
+}
+
+func (b Bot) RemoveWebhook() error {
+	return b.SetWebhook("")
+}
+
 // Listen periodically looks for updates and delivers new messages
 // to subscription channel.
 func (b Bot) Listen(subscription chan<- Message, interval time.Duration) {
